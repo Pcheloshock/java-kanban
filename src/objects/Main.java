@@ -77,7 +77,6 @@ public class Main {
         printAllTasks(manager);
 
 
-
         System.out.println("История после удаления (должны автоматически удалиться удаленные задачи):");
         for (Task task : manager.getHistory()) {
             System.out.println(" - " + task);
