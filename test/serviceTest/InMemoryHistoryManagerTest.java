@@ -54,9 +54,7 @@ class InMemoryHistoryManagerTest {
         historyManager.add(task2);
         List<Task> history = historyManager.getHistory();
 
-        assertEquals(2, history.size(), "Неверное количество задач в истории");
-        assertEquals(1, history.get(0).getId(), "Неверный порядок задач в истории");
-        assertEquals(2, history.get(1).getId(), "Неверный порядок задач в истории");
+        assertEquals(List.of(task1, task2), history, "Неверный порядок задач в истории");
     }
 
     @Test
@@ -72,7 +70,64 @@ class InMemoryHistoryManagerTest {
         List<Task> history = historyManager.getHistory();
 
         assertEquals(1, history.size(), "В истории остались дубликаты");
-        assertEquals(1, history.get(0).getId(), "Неверная задача в истории");
+        assertEquals(task, history.get(0), "Неверная задача в истории");
+    }
+
+    @Test
+    void testRemoveFromBeginning() {
+        Task task1 = new Task("Task1", "Description");
+        task1.setId(1);
+        Task task2 = new Task("Task2", "Description");
+        task2.setId(2);
+        Task task3 = new Task("Task3", "Description");
+        task3.setId(3);
+
+        historyManager.add(task1);
+        historyManager.add(task2);
+        historyManager.add(task3);
+
+        historyManager.remove(1); // Удаляем первую задачу
+
+        assertEquals(List.of(task2, task3), historyManager.getHistory(),
+                "Неверный порядок после удаления из начала");
+    }
+
+    @Test
+    void testRemoveFromMiddle() {
+        Task task1 = new Task("Task1", "Description");
+        task1.setId(1);
+        Task task2 = new Task("Task2", "Description");
+        task2.setId(2);
+        Task task3 = new Task("Task3", "Description");
+        task3.setId(3);
+
+        historyManager.add(task1);
+        historyManager.add(task2);
+        historyManager.add(task3);
+
+        historyManager.remove(2); // Удаляем задачу из середины
+
+        assertEquals(List.of(task1, task3), historyManager.getHistory(),
+                "Неверный порядок после удаления из середины");
+    }
+
+    @Test
+    void testRemoveFromEnd() {
+        Task task1 = new Task("Task1", "Description");
+        task1.setId(1);
+        Task task2 = new Task("Task2", "Description");
+        task2.setId(2);
+        Task task3 = new Task("Task3", "Description");
+        task3.setId(3);
+
+        historyManager.add(task1);
+        historyManager.add(task2);
+        historyManager.add(task3);
+
+        historyManager.remove(3); // Удаляем последнюю задачу
+
+        assertEquals(List.of(task1, task2), historyManager.getHistory(),
+                "Неверный порядок после удаления с конца");
     }
 
     @Test
@@ -90,4 +145,3 @@ class InMemoryHistoryManagerTest {
         assertEquals(15, history.get(14).getId(), "Неверная задача в конце истории");
     }
 }
-
