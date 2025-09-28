@@ -1,7 +1,13 @@
+package serviceTest;
+
+import objects.Epic;
+import objects.Status;
+import objects.Subtask;
+import objects.Task;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import objects.*;
-import service.*;
+import service.InMemoryTaskManager;
+import service.TaskManager;
 
 import java.util.List;
 
@@ -91,16 +97,37 @@ class InMemoryTaskManagerTest {
         assertNull(manager.getEpic(epicId), "Эпик не удален");
     }
 
-    // Тесты для истории
     @Test
-    void testHistoryLimit() {
-        for (int i = 0; i < 15; i++) {
-            Task task = new Task("Task" + i, "Description");
-            int taskId = manager.createTask(task);
+    void testHistoryRemoveDuplicates() {
+        Task task = new Task("Test", "Description");
+        int taskId = manager.createTask(task);
+
+        // Добавляем задачу в историю multiple times
+        for (int i = 0; i < 5; i++) {
             manager.getTask(taskId);
         }
 
-        assertEquals(10, manager.getHistory().size(), "История превышает лимит");
+        // Должна остаться только одна запись
+        assertEquals(1, manager.getHistory().size(), "История содержит дубликаты");
+        assertEquals(taskId, manager.getHistory().get(0).getId(), "Неверная задача в истории");
+    }
+
+    @Test
+    void testHistoryOrderWithDuplicates() {
+        Task task1 = new Task("Task1", "Description");
+        Task task2 = new Task("Task2", "Description");
+        int id1 = manager.createTask(task1);
+        int id2 = manager.createTask(task2);
+
+        // Добавляем в разном порядке
+        manager.getTask(id1);
+        manager.getTask(id2);
+        manager.getTask(id1); // Повторный просмотр
+
+        List<Task> history = manager.getHistory();
+        assertEquals(2, history.size(), "Неверное количество задач в истории");
+        assertEquals(id2, history.get(0).getId(), "Неверный порядок в истории");
+        assertEquals(id1, history.get(1).getId(), "Неверный порядок в истории");
     }
 
     @Test
@@ -114,6 +141,7 @@ class InMemoryTaskManagerTest {
         manager.getTask(id2);
 
         List<Task> history = manager.getHistory();
+        assertEquals(2, history.size(), "Неверное количество задач в истории");
         assertEquals(id1, history.get(0).getId(), "Неверный порядок в истории");
         assertEquals(id2, history.get(1).getId(), "Неверный порядок в истории");
     }
