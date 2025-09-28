@@ -23,6 +23,10 @@ public class Task {
         return id == task.id;
     }
 
+    public TaskType getType() {
+        return TaskType.TASK;
+    }
+
     @Override
     public int hashCode() {
         return Objects.hash(id);

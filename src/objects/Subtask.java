@@ -3,6 +3,11 @@ package objects;
 public class Subtask extends Task {
     private int epicId;
 
+    @Override
+    public TaskType getType() {
+        return TaskType.SUBTASK;
+    }
+
     // Конструктор для создания новой подзадачи (без id и status)
     public Subtask(String title, String description, int epicId) {
         super(title, description);

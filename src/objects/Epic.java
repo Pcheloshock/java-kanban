@@ -6,6 +6,11 @@ import java.util.List;
 public class Epic extends Task {
     private List<Integer> subtaskIds;
 
+    @Override
+    public TaskType getType() {
+        return TaskType.EPIC;
+    }
+
     // Конструктор для создания нового эпика (без id и status)
     public Epic(String title, String description) {
         super(title, description);
