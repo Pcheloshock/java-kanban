@@ -3,23 +3,21 @@ package objects;
 public class Subtask extends Task {
     private int epicId;
 
-    @Override
-    public TaskType getType() {
-        return TaskType.SUBTASK;
-    }
-
-    // Конструктор для создания новой подзадачи (без id и status)
+    // Конструктор для создания новой подзадачи (без id)
     public Subtask(String title, String description, int epicId) {
         super(title, description);
         this.epicId = epicId;
     }
 
-    // Конструктор для получения подзадачи из менеджера (с id и status)
+    // Конструктор для создания подзадачи с id и статусом
     public Subtask(int id, String title, String description, Status status, int epicId) {
-        super(title, description); // Используем базовый конструктор
-        this.setId(id);            // Устанавливаем ID через сеттер
-        this.setStatus(status);    // Устанавливаем статус через сеттер
+        super(id, title, description, status);
         this.epicId = epicId;
+    }
+
+    @Override
+    public TaskType getType() {
+        return TaskType.SUBTASK;
     }
 
     public int getEpicId() {

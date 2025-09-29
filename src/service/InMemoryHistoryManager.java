@@ -28,7 +28,7 @@ public class InMemoryHistoryManager implements HistoryManager {
     public void add(Task task) {
         if (task == null) return;
         int id = task.getId();
-        removeNode(historyMap.get(id)); // Удаляем существующий узел, если есть
+        removeNode(historyMap.get(id));
         linkLast(task);
     }
 
@@ -39,7 +39,7 @@ public class InMemoryHistoryManager implements HistoryManager {
 
     @Override
     public void remove(int id) {
-        removeNode(historyMap.get(id)); // Теперь removeNode безопасно обрабатывает null
+        removeNode(historyMap.get(id));
     }
 
     private void linkLast(Task task) {
@@ -65,7 +65,7 @@ public class InMemoryHistoryManager implements HistoryManager {
     }
 
     private void removeNode(Node node) {
-        if (node == null) return; // Безопасная обработка null
+        if (node == null) return;
 
         if (node.prev != null) {
             node.prev.next = node.next;

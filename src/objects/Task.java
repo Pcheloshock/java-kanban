@@ -12,7 +12,19 @@ public class Task {
     public Task(String title, String description) {
         this.title = title;
         this.description = description;
-        this.status = Status.NEW; // Статус по умолчанию
+        this.status = Status.NEW;
+    }
+
+    // Конструктор для создания задачи с id
+    public Task(int id, String title, String description, Status status) {
+        this.id = id;
+        this.title = title;
+        this.description = description;
+        this.status = status;
+    }
+
+    public TaskType getType() {
+        return TaskType.TASK;
     }
 
     @Override
@@ -21,10 +33,6 @@ public class Task {
         if (o == null || getClass() != o.getClass()) return false;
         Task task = (Task) o;
         return id == task.id;
-    }
-
-    public TaskType getType() {
-        return TaskType.TASK;
     }
 
     @Override

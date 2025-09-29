@@ -16,9 +16,9 @@ public interface TaskManager {
 
     void updateTask(Task task);
 
-    void deleteAllTasks(); // Добавлено
+    void deleteAllTasks();
 
-    void deleteTask(int id); // Добавлено
+    void deleteTask(int id);
 
     // Методы для Subtask
     List<Subtask> getAllSubtasks();
@@ -29,9 +29,9 @@ public interface TaskManager {
 
     void updateSubtask(Subtask subtask);
 
-    void deleteAllSubtasks(); // Добавлено
+    void deleteAllSubtasks();
 
-    void deleteSubtask(int id); // Добавлено
+    void deleteSubtask(int id);
 
     // Методы для Epic
     List<Epic> getAllEpics();
@@ -42,13 +42,12 @@ public interface TaskManager {
 
     void updateEpic(Epic epic);
 
-    void deleteAllEpics(); // Добавлено
+    void deleteAllEpics();
 
-    void deleteEpic(int id); // Добавлено
+    void deleteEpic(int id);
 
     // Дополнительные методы
     List<Subtask> getEpicSubtasks(int epicId);
 
     List<Task> getHistory();
-
 }
