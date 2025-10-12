@@ -25,21 +25,6 @@ class FileBackedTaskManagerTest {
     private int epicId;
     private int subtaskId;
 
-    @BeforeEach
-    void setUp() throws IOException {
-        testFile = Files.createTempFile(tempDir, "test", ".csv").toFile();
-        manager = new FileBackedTaskManager(testFile);
-
-        // Создаем по одной задаче каждого типа
-        Task task = new Task("Test Task", "Task Description");
-        taskId = manager.createTask(task);
-
-        Epic epic = new Epic("Test Epic", "Epic Description");
-        epicId = manager.createEpic(epic);
-
-        Subtask subtask = new Subtask("Test Subtask", "Subtask Description", epicId);
-        subtaskId = manager.createSubtask(subtask);
-    }
 
     @Test
     void testSaveAndLoadEmptyFile() {
@@ -57,6 +42,7 @@ class FileBackedTaskManagerTest {
         );
     }
 
+
     @Test
     void testSaveAndLoadTasks() {
         FileBackedTaskManager loadedManager = FileBackedTaskManager.loadFromFile(testFile);
@@ -69,31 +55,19 @@ class FileBackedTaskManagerTest {
     }
 
     @Test
-    void testSaveAndLoadTaskContent() {
-        FileBackedTaskManager loadedManager = FileBackedTaskManager.loadFromFile(testFile);
-
-        Task loadedTask = loadedManager.getTask(taskId);
-        assertAll(
-                () -> assertNotNull(loadedTask),
-                () -> assertEquals("Test Task", loadedTask.getTitle()),
-                () -> assertEquals("Task Description", loadedTask.getDescription()),
-                () -> assertEquals(Status.NEW, loadedTask.getStatus())
-        );
-    }
-
-    @Test
     void testSaveAndLoadWithStatusChanges() {
-        // Обновляем статус подзадачи
         Subtask updatedSubtask = new Subtask(subtaskId, "Test Subtask", "Subtask Description", Status.DONE, epicId);
         manager.updateSubtask(updatedSubtask);
 
         FileBackedTaskManager loadedManager = FileBackedTaskManager.loadFromFile(testFile);
 
         assertAll(
-                () -> assertEquals(Status.DONE, loadedManager.getSubtask(subtaskId).getStatus()),
-                () -> assertEquals(Status.DONE, loadedManager.getEpic(epicId).getStatus())
+                // Use orElseThrow on the Optional to get the object before calling getStatus()
+                () -> assertEquals(Status.DONE, loadedManager.getSubtask(subtaskId).orElseThrow().getStatus()),
+                () -> assertEquals(Status.DONE, loadedManager.getEpic(epicId).orElseThrow().getStatus())
         );
     }
+
 
     @Test
     void testSaveAndLoadAfterDeletion() {
@@ -104,11 +78,11 @@ class FileBackedTaskManagerTest {
         FileBackedTaskManager loadedManager = FileBackedTaskManager.loadFromFile(testFile);
 
         assertAll(
-                () -> assertNull(loadedManager.getTask(taskId)),
-                () -> assertNull(loadedManager.getSubtask(subtaskId)),
-                () -> assertNotNull(loadedManager.getEpic(epicId)),
-                () -> assertTrue(loadedManager.getEpic(epicId).getSubtaskIds().isEmpty()),
-                () -> assertEquals(Status.NEW, loadedManager.getEpic(epicId).getStatus())
+                () -> assertTrue(loadedManager.getTask(taskId).isEmpty(), "Задача не удалена"),
+                () -> assertTrue(loadedManager.getSubtask(subtaskId).isEmpty(), "Подзадачи не удалены"),
+                () -> assertTrue(loadedManager.getEpic(epicId).isPresent(), "Эпик не найден"),
+                () -> assertTrue(loadedManager.getEpic(epicId).orElseThrow().getSubtaskIds().isEmpty()),
+                () -> assertEquals(Status.NEW, loadedManager.getEpic(epicId).orElseThrow().getStatus())
         );
     }
 
@@ -117,8 +91,8 @@ class FileBackedTaskManagerTest {
         String content = Files.readString(testFile.toPath());
         String[] lines = content.split("\n");
 
-        // Проверяем заголовок
-        assertEquals("id,type,name,status,description,epic", lines[0].trim());
+        // ОБНОВЛЕННЫЙ заголовок - теперь с полями startTime и duration
+        assertEquals("id,type,name,status,description,epic,startTime,duration", lines[0].trim());
 
         // Проверяем, что есть как минимум 4 строки (заголовок + 3 задачи)
         assertTrue(lines.length >= 4);
@@ -127,8 +101,9 @@ class FileBackedTaskManagerTest {
         for (int i = 1; i < lines.length; i++) {
             if (lines[i].trim().isEmpty()) continue;
 
-            String[] fields = lines[i].split(",", 6);
-            assertEquals(6, fields.length, "Строка должна содержать 6 полей: " + lines[i]);
+            // ОБНОВЛЕНО: теперь 8 полей вместо 6
+            String[] fields = lines[i].split(",", 8);
+            assertEquals(8, fields.length, "Строка должна содержать 8 полей: " + lines[i]);
 
             // Проверяем, что id - число
             assertDoesNotThrow(() -> Integer.parseInt(fields[0].trim()));
@@ -153,12 +128,28 @@ class FileBackedTaskManagerTest {
         });
     }
 
+
+    @Test
+    void testSaveAndLoadTaskContent() {
+        FileBackedTaskManager loadedManager = FileBackedTaskManager.loadFromFile(testFile);
+
+        // Use orElseThrow to get the value or fail the test if not found
+        Task loadedTask = loadedManager.getTask(taskId).orElseThrow();
+        assertAll(
+                () -> assertNotNull(loadedTask),
+                () -> assertEquals("Test Task", loadedTask.getTitle()),
+                () -> assertEquals("Task Description", loadedTask.getDescription()),
+                () -> assertEquals(Status.NEW, loadedTask.getStatus())
+        );
+    }
+
     @Test
     void testTaskRelationshipsPreserved() {
         FileBackedTaskManager loadedManager = FileBackedTaskManager.loadFromFile(testFile);
 
-        Subtask loadedSubtask = loadedManager.getSubtask(subtaskId);
-        Epic loadedEpic = loadedManager.getEpic(epicId);
+        // Use orElseThrow to get the actual Subtask and Epic objects
+        Subtask loadedSubtask = loadedManager.getSubtask(subtaskId).orElseThrow();
+        Epic loadedEpic = loadedManager.getEpic(epicId).orElseThrow();
 
         assertAll(
                 () -> assertEquals(epicId, loadedSubtask.getEpicId()),
@@ -173,7 +164,7 @@ class FileBackedTaskManagerTest {
         manager.updateTask(updatedTask);
 
         FileBackedTaskManager loadedManager = FileBackedTaskManager.loadFromFile(testFile);
-        Task loadedTask = loadedManager.getTask(taskId);
+        Task loadedTask = loadedManager.getTask(taskId).orElseThrow();
 
         assertAll(
                 () -> assertEquals("Updated Task", loadedTask.getTitle()),
@@ -181,6 +172,23 @@ class FileBackedTaskManagerTest {
                 () -> assertEquals(Status.IN_PROGRESS, loadedTask.getStatus())
         );
     }
+
+    @BeforeEach
+    void setUp() throws IOException {
+        testFile = Files.createTempFile(tempDir, "test", ".csv").toFile();
+        manager = new FileBackedTaskManager(testFile);
+
+        // Create one task of each type
+        Task task = new Task("Test Task", "Task Description");
+        taskId = manager.createTask(task);
+
+        Epic epic = new Epic("Test Epic", "Epic Description");
+        epicId = manager.createEpic(epic);
+
+        Subtask subtask = new Subtask("Test Subtask", "Subtask Description", epicId);
+        subtaskId = manager.createSubtask(subtask);
+    }
+
 
     @Test
     void testSaveWithIOException() {

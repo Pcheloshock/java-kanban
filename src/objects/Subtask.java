@@ -1,5 +1,8 @@
 package objects;
 
+import java.time.Duration;
+import java.time.LocalDateTime;
+
 public class Subtask extends Task {
     private int epicId;
 
@@ -12,6 +15,13 @@ public class Subtask extends Task {
     // Конструктор для создания подзадачи с id и статусом
     public Subtask(int id, String title, String description, Status status, int epicId) {
         super(id, title, description, status);
+        this.epicId = epicId;
+    }
+
+    // Конструктор с новыми полями
+    public Subtask(int id, String title, String description, Status status, int epicId,
+                   LocalDateTime startTime, Duration duration) {
+        super(id, title, description, status, startTime, duration);
         this.epicId = epicId;
     }
 
@@ -38,6 +48,9 @@ public class Subtask extends Task {
                 ", title='" + getTitle() + '\'' +
                 ", description='" + getDescription() + '\'' +
                 ", status=" + getStatus() +
+                ", duration=" + (getDuration() != null ? getDuration().toMinutes() + "min" : "null") +
+                ", startTime=" + getStartTime() +
+                ", endTime=" + getEndTime() +
                 ", epicId=" + epicId +
                 '}';
     }

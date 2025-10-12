@@ -26,7 +26,7 @@ class InMemoryTaskManagerTest {
     void testAddAndGetTask() {
         Task task = new Task("Test", "Description");
         int taskId = manager.createTask(task);
-        Task savedTask = manager.getTask(taskId);
+        Task savedTask = manager.getTask(taskId).orElseThrow(); // ← ДОБАВЬТЕ .orElseThrow()
 
         assertNotNull(savedTask, "Задача не найдена");
         assertEquals(task.getTitle(), savedTask.getTitle(), "Названия задач не совпадают");
@@ -39,14 +39,13 @@ class InMemoryTaskManagerTest {
         Task task = new Task("Test", "Description");
         int taskId = manager.createTask(task);
 
-        // Создаем обновленную задачу с использованием сеттеров
         Task updatedTask = new Task("Updated", "Updated");
         updatedTask.setId(taskId);
         updatedTask.setStatus(Status.DONE);
 
         manager.updateTask(updatedTask);
 
-        Task savedTask = manager.getTask(taskId);
+        Task savedTask = manager.getTask(taskId).orElseThrow(); // ← ДОБАВЬТЕ .orElseThrow()
         assertEquals("Updated", savedTask.getTitle(), "Название задачи не обновлено");
         assertEquals(Status.DONE, savedTask.getStatus(), "Статус задачи не обновлен");
     }
@@ -57,7 +56,8 @@ class InMemoryTaskManagerTest {
         int taskId = manager.createTask(task);
         manager.deleteTask(taskId);
 
-        assertNull(manager.getTask(taskId), "Задача не удалена");
+        // Replace assertNull with assertTrue and isEmpty()
+        assertTrue(manager.getTask(taskId).isEmpty(), "Задача не удалена");
         assertTrue(manager.getAllTasks().isEmpty(), "Список задач не пуст");
     }
 
@@ -66,7 +66,7 @@ class InMemoryTaskManagerTest {
     void testAddAndGetEpic() {
         Epic epic = new Epic("Test Epic", "Description");
         int epicId = manager.createEpic(epic);
-        Epic savedEpic = manager.getEpic(epicId);
+        Epic savedEpic = manager.getEpic(epicId).orElseThrow(); // ← ДОБАВЬТЕ .orElseThrow()
 
         assertNotNull(savedEpic, "Эпик не найден");
         assertEquals(Status.NEW, savedEpic.getStatus(), "Статус эпика не NEW");
@@ -80,7 +80,7 @@ class InMemoryTaskManagerTest {
         Subtask subtask = new Subtask("Test", "Description", epicId);
         int subtaskId = manager.createSubtask(subtask);
 
-        Subtask savedSubtask = manager.getSubtask(subtaskId);
+        Subtask savedSubtask = manager.getSubtask(subtaskId).orElseThrow(); // ← ДОБАВЬТЕ .orElseThrow()
         assertNotNull(savedSubtask, "Подзадача не найдена");
         assertEquals(epicId, savedSubtask.getEpicId(), "ID эпика не совпадает");
     }
@@ -93,8 +93,10 @@ class InMemoryTaskManagerTest {
         int subtaskId = manager.createSubtask(subtask);
 
         manager.deleteEpic(epicId);
-        assertNull(manager.getSubtask(subtaskId), "Подзадачи не удалены");
-        assertNull(manager.getEpic(epicId), "Эпик не удален");
+
+        // Check that both Optional objects are empty
+        assertTrue(manager.getSubtask(subtaskId).isEmpty(), "Подзадачи не удалены");
+        assertTrue(manager.getEpic(epicId).isEmpty(), "Эпик не удален");
     }
 
     @Test
@@ -154,7 +156,8 @@ class InMemoryTaskManagerTest {
         Subtask subtask = new Subtask("Test", "Description", epicId);
         manager.createSubtask(subtask);
 
-        assertEquals(Status.NEW, manager.getEpic(epicId).getStatus(), "Статус эпика должен быть NEW");
+        assertEquals(Status.NEW, manager.getEpic(epicId).orElseThrow().getStatus(), "Статус эпика должен быть NEW");
+        // ↑ ДОБАВЬТЕ .orElseThrow() перед .getStatus()
     }
 
     @Test
@@ -164,14 +167,14 @@ class InMemoryTaskManagerTest {
         Subtask subtask = new Subtask("Test", "Description", epicId);
         int subtaskId = manager.createSubtask(subtask);
 
-        // Создаем обновленную подзадачу с использованием сеттеров
         Subtask updated = new Subtask("Test", "Description", epicId);
         updated.setId(subtaskId);
         updated.setStatus(Status.DONE);
 
         manager.updateSubtask(updated);
 
-        assertEquals(Status.DONE, manager.getEpic(epicId).getStatus(), "Статус эпика должен быть DONE");
+        assertEquals(Status.DONE, manager.getEpic(epicId).orElseThrow().getStatus(), "Статус эпика должен быть DONE");
+        // ↑ ДОБАВЬТЕ .orElseThrow() перед .getStatus()
     }
 
     @Test
@@ -183,13 +186,13 @@ class InMemoryTaskManagerTest {
         int id1 = manager.createSubtask(subtask1);
         int id2 = manager.createSubtask(subtask2);
 
-        // Создаем обновленную подзадачу с использованием сеттеров
         Subtask updated1 = new Subtask("Test1", "Description", epicId);
         updated1.setId(id1);
         updated1.setStatus(Status.DONE);
 
         manager.updateSubtask(updated1);
 
-        assertEquals(Status.IN_PROGRESS, manager.getEpic(epicId).getStatus(), "Статус эпика должен быть IN_PROGRESS");
+        assertEquals(Status.IN_PROGRESS, manager.getEpic(epicId).orElseThrow().getStatus(), "Статус эпика должен быть IN_PROGRESS");
+        // ↑ ДОБАВЬТЕ .orElseThrow() перед .getStatus()
     }
 }

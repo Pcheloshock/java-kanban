@@ -1,5 +1,7 @@
 package objects;
 
+import java.time.Duration;
+import java.time.LocalDateTime;
 import java.util.Objects;
 
 public class Task {
@@ -7,6 +9,8 @@ public class Task {
     private String title;
     private String description;
     private Status status;
+    private Duration duration;
+    private LocalDateTime startTime;
 
     // Конструктор для создания новой задачи (без id)
     public Task(String title, String description) {
@@ -23,8 +27,26 @@ public class Task {
         this.status = status;
     }
 
+    // Конструктор с новыми полями
+    public Task(int id, String title, String description, Status status,
+                LocalDateTime startTime, Duration duration) {
+        this.id = id;
+        this.title = title;
+        this.description = description;
+        this.status = status;
+        this.startTime = startTime;
+        this.duration = duration;
+    }
+
     public TaskType getType() {
         return TaskType.TASK;
+    }
+
+    public LocalDateTime getEndTime() {
+        if (startTime == null || duration == null) {
+            return null;
+        }
+        return startTime.plus(duration);
     }
 
     @Override
@@ -73,6 +95,22 @@ public class Task {
         this.status = status;
     }
 
+    public Duration getDuration() {
+        return duration;
+    }
+
+    public void setDuration(Duration duration) {
+        this.duration = duration;
+    }
+
+    public LocalDateTime getStartTime() {
+        return startTime;
+    }
+
+    public void setStartTime(LocalDateTime startTime) {
+        this.startTime = startTime;
+    }
+
     @Override
     public String toString() {
         return "Task{" +
@@ -80,6 +118,9 @@ public class Task {
                 ", title='" + title + '\'' +
                 ", description='" + description + '\'' +
                 ", status=" + status +
+                ", duration=" + (duration != null ? duration.toMinutes() + "min" : "null") +
+                ", startTime=" + startTime +
+                ", endTime=" + getEndTime() +
                 '}';
     }
 }
