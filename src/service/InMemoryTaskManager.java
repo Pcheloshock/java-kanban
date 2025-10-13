@@ -51,9 +51,6 @@ public class InMemoryTaskManager implements TaskManager {
         } else {
             epic.setStatus(Status.IN_PROGRESS);
         }
-
-        // Обновляем временные характеристики эпика
-        updateEpicTime(epicId);
     }
 
     private void updateEpicTime(int epicId) {
@@ -90,10 +87,13 @@ public class InMemoryTaskManager implements TaskManager {
         epic.setEndTime(latestEnd.orElse(null));
     }
 
+    protected void updateEpic(int epicId) {
+        updateEpicStatus(epicId);
+        updateEpicTime(epicId);
+    }
+
     private void addToPrioritized(Task task) {
-        if (task.getStartTime() != null) {
-            prioritizedTasks.add(task);
-        }
+        prioritizedTasks.add(task); // убираем проверку на null
     }
 
     private void removeFromPrioritized(Task task) {
