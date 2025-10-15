@@ -72,7 +72,7 @@ public class Main {
 
         // Проверяем автоматическое обновление статуса эпика
         System.out.println("Статус эпика " + epicId1 + " после обновления подзадачи: " +
-                manager.getEpic(epicId1).getStatus());
+                manager.getEpic(epicId1).getClass());
 
         printAllTasks(manager);
 

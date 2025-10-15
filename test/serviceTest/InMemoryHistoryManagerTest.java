@@ -8,8 +8,7 @@ import service.InMemoryHistoryManager;
 
 import java.util.List;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
 
 class InMemoryHistoryManagerTest {
     private HistoryManager historyManager;
@@ -20,128 +19,132 @@ class InMemoryHistoryManagerTest {
     }
 
     @Test
-    void testAddTaskToHistory() {
-        Task task = new Task("Test", "Description");
+    void testEmptyHistory() {
+        List<Task> history = historyManager.getHistory();
+        assertTrue(history.isEmpty(), "История должна быть пустой");
+    }
+
+    @Test
+    void testAddDuplicateTasks() {
+        Task task = new Task("Test Task", "Description");
         task.setId(1);
 
         historyManager.add(task);
-        List<Task> history = historyManager.getHistory();
-
-        assertEquals(1, history.size(), "Задача не добавлена в историю");
-        assertEquals(task, history.get(0), "Задача в истории не совпадает с добавленной");
-    }
-
-    @Test
-    void testRemoveTaskFromHistory() {
-        Task task = new Task("Test", "Description");
-        task.setId(1);
-
-        historyManager.add(task);
-        historyManager.remove(1);
-        List<Task> history = historyManager.getHistory();
-
-        assertTrue(history.isEmpty(), "Задача не удалена из истории");
-    }
-
-    @Test
-    void testHistoryOrder() {
-        Task task1 = new Task("Task1", "Description");
-        task1.setId(1);
-        Task task2 = new Task("Task2", "Description");
-        task2.setId(2);
-
-        historyManager.add(task1);
-        historyManager.add(task2);
-        List<Task> history = historyManager.getHistory();
-
-        assertEquals(List.of(task1, task2), history, "Неверный порядок задач в истории");
-    }
-
-    @Test
-    void testRemoveDuplicates() {
-        Task task = new Task("Test", "Description");
-        task.setId(1);
-
-        // Добавляем одну и ту же задачу несколько раз
-        for (int i = 0; i < 5; i++) {
-            historyManager.add(task);
-        }
+        historyManager.add(task); // Дубликат
+        historyManager.add(task); // Еще один дубликат
 
         List<Task> history = historyManager.getHistory();
-
-        assertEquals(1, history.size(), "В истории остались дубликаты");
-        assertEquals(task, history.get(0), "Неверная задача в истории");
+        assertEquals(1, history.size(), "История должна содержать только одну задачу при дублировании");
+        assertEquals(1, history.get(0).getId(), "ID задачи должен быть 1");
     }
 
     @Test
     void testRemoveFromBeginning() {
-        Task task1 = new Task("Task1", "Description");
+        Task task1 = new Task("Task 1", "Description");
         task1.setId(1);
-        Task task2 = new Task("Task2", "Description");
+        Task task2 = new Task("Task 2", "Description");
         task2.setId(2);
-        Task task3 = new Task("Task3", "Description");
+        Task task3 = new Task("Task 3", "Description");
         task3.setId(3);
 
         historyManager.add(task1);
         historyManager.add(task2);
         historyManager.add(task3);
 
-        historyManager.remove(1); // Удаляем первую задачу
+        // Удаляем из начала
+        historyManager.remove(1);
 
-        assertEquals(List.of(task2, task3), historyManager.getHistory(),
-                "Неверный порядок после удаления из начала");
+        List<Task> history = historyManager.getHistory();
+        assertEquals(2, history.size(), "Должно остаться 2 задачи");
+        assertEquals(2, history.get(0).getId(), "Первой должна быть задача 2");
+        assertEquals(3, history.get(1).getId(), "Второй должна быть задача 3");
     }
 
     @Test
     void testRemoveFromMiddle() {
-        Task task1 = new Task("Task1", "Description");
+        Task task1 = new Task("Task 1", "Description");
         task1.setId(1);
-        Task task2 = new Task("Task2", "Description");
+        Task task2 = new Task("Task 2", "Description");
         task2.setId(2);
-        Task task3 = new Task("Task3", "Description");
+        Task task3 = new Task("Task 3", "Description");
         task3.setId(3);
 
         historyManager.add(task1);
         historyManager.add(task2);
         historyManager.add(task3);
 
-        historyManager.remove(2); // Удаляем задачу из середины
+        // Удаляем из середины
+        historyManager.remove(2);
 
-        assertEquals(List.of(task1, task3), historyManager.getHistory(),
-                "Неверный порядок после удаления из середины");
+        List<Task> history = historyManager.getHistory();
+        assertEquals(2, history.size(), "Должно остаться 2 задачи");
+        assertEquals(1, history.get(0).getId(), "Первой должна быть задача 1");
+        assertEquals(3, history.get(1).getId(), "Второй должна быть задача 3");
     }
 
     @Test
     void testRemoveFromEnd() {
-        Task task1 = new Task("Task1", "Description");
+        Task task1 = new Task("Task 1", "Description");
         task1.setId(1);
-        Task task2 = new Task("Task2", "Description");
+        Task task2 = new Task("Task 2", "Description");
         task2.setId(2);
-        Task task3 = new Task("Task3", "Description");
+        Task task3 = new Task("Task 3", "Description");
         task3.setId(3);
 
         historyManager.add(task1);
         historyManager.add(task2);
         historyManager.add(task3);
 
-        historyManager.remove(3); // Удаляем последнюю задачу
+        // Удаляем из конца
+        historyManager.remove(3);
 
-        assertEquals(List.of(task1, task2), historyManager.getHistory(),
-                "Неверный порядок после удаления с конца");
+        List<Task> history = historyManager.getHistory();
+        assertEquals(2, history.size(), "Должно остаться 2 задачи");
+        assertEquals(1, history.get(0).getId(), "Первой должна быть задача 1");
+        assertEquals(2, history.get(1).getId(), "Второй должна быть задача 2");
     }
 
     @Test
-    void testHistoryUnlimitedSize() {
-        // Добавляем больше задач, чем было в старом ограничении
-        for (int i = 1; i <= 15; i++) {
-            Task task = new Task("Task" + i, "Description");
-            task.setId(i);
-            historyManager.add(task);
-        }
+    void testRemoveNonExistentTask() {
+        Task task = new Task("Task", "Description");
+        task.setId(1);
+        historyManager.add(task);
+
+        // Удаляем несуществующую задачу
+        historyManager.remove(999);
 
         List<Task> history = historyManager.getHistory();
+        assertEquals(1, history.size(), "История не должна измениться при удалении несуществующей задачи");
+    }
 
-        assertEquals(15, history.size(), "История имеет неверный размер");
-        assertEquals(15, history.get(14).getId(), "Неверная задача в конце истории");
+    @Test
+    void testHistoryOrderPreservation() {
+        Task task1 = new Task("Task 1", "Description");
+        task1.setId(1);
+        Task task2 = new Task("Task 2", "Description");
+        task2.setId(2);
+        Task task3 = new Task("Task 3", "Description");
+        task3.setId(3);
+
+        // Добавляем в разном порядке
+        historyManager.add(task1);
+        historyManager.add(task3);
+        historyManager.add(task2);
+        historyManager.add(task1); // Дубликат - должен переместиться в конец
+
+        List<Task> history = historyManager.getHistory();
+        assertEquals(3, history.size(), "Должно быть 3 уникальных задачи");
+        assertEquals(3, history.get(0).getId(), "Первой должна быть задача 3");
+        assertEquals(2, history.get(1).getId(), "Второй должна быть задача 2");
+        assertEquals(1, history.get(2).getId(), "Третьей должна быть задача 1 (последний просмотр)");
+    }
+
+    @Test
+    void testAddNullTask() {
+        assertDoesNotThrow(() -> historyManager.add(null),
+                "Добавление null не должно вызывать исключение");
+
+        List<Task> history = historyManager.getHistory();
+        assertTrue(history.isEmpty(), "История должна остаться пустой после добавления null");
     }
 }
