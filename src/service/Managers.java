@@ -8,4 +8,8 @@ public class Managers {
     public static HistoryManager getDefaultHistory() {
         return new InMemoryHistoryManager();
     }
+
+    public static TaskManager getFileBackedTaskManager() {
+        return new FileBackedTaskManager(new java.io.File("tasks.csv"));
+    }
 }
