@@ -1,7 +1,6 @@
 package service;
 
 import com.sun.net.httpserver.HttpExchange;
-import com.sun.net.httpserver.HttpHandler;
 import objects.Task;
 
 import java.io.IOException;
@@ -9,11 +8,10 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
 
-public class PrioritizedHandler extends BaseHttpHandler implements HttpHandler {
-    private final TaskManager taskManager;
+public class PrioritizedHandler extends BaseHttpHandler {
 
     public PrioritizedHandler(TaskManager taskManager) {
-        this.taskManager = taskManager;
+        super(taskManager); // Явный вызов конструктора родителя
     }
 
     @Override
@@ -24,7 +22,6 @@ public class PrioritizedHandler extends BaseHttpHandler implements HttpHandler {
         }
 
         try {
-            // Собираем все задачи и сортируем по приоритету (по id для простоты)
             List<Task> allTasks = taskManager.getAllTasks();
             allTasks.addAll(taskManager.getAllSubtasks());
 

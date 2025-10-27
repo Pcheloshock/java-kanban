@@ -3,12 +3,9 @@ package service;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.sun.net.httpserver.HttpServer;
-import objects.Task;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
 
 public class HttpTaskServer {
     private static final int PORT = 8080;
@@ -21,6 +18,7 @@ public class HttpTaskServer {
         this.gson = createGson();
 
         server = HttpServer.create(new InetSocketAddress(PORT), 0);
+
         server.createContext("/tasks", new TasksHandler(taskManager));
         server.createContext("/subtasks", new SubtasksHandler(taskManager));
         server.createContext("/epics", new EpicsHandler(taskManager));
@@ -29,9 +27,7 @@ public class HttpTaskServer {
     }
 
     private Gson createGson() {
-        return new GsonBuilder()
-                .setPrettyPrinting()
-                .create();
+        return new GsonBuilder().setPrettyPrinting().create();
     }
 
     public static Gson getGson() {
@@ -53,7 +49,6 @@ public class HttpTaskServer {
         HttpTaskServer server = new HttpTaskServer(manager);
         server.start();
 
-        // Добавляем shutdown hook для корректного завершения
         Runtime.getRuntime().addShutdownHook(new Thread(server::stop));
     }
 }

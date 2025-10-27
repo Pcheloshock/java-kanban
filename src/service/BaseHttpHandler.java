@@ -3,14 +3,21 @@ package service;
 import com.google.gson.Gson;
 import com.google.gson.JsonSyntaxException;
 import com.sun.net.httpserver.HttpExchange;
+import com.sun.net.httpserver.HttpHandler;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.Optional;
 
-public class BaseHttpHandler {
-    protected final Gson gson = new Gson();
+public abstract class BaseHttpHandler implements HttpHandler {
+    protected final TaskManager taskManager;
+    protected final Gson gson;
+
+    public BaseHttpHandler(TaskManager taskManager) {
+        this.taskManager = taskManager;
+        this.gson = new Gson();
+    }
 
     protected void sendText(HttpExchange exchange, String text, int statusCode) throws IOException {
         byte[] response = text.getBytes(StandardCharsets.UTF_8);

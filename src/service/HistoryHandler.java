@@ -1,15 +1,13 @@
 package service;
 
 import com.sun.net.httpserver.HttpExchange;
-import com.sun.net.httpserver.HttpHandler;
 
 import java.io.IOException;
 
-public class HistoryHandler extends BaseHttpHandler implements HttpHandler {
-    private final TaskManager taskManager;
+public class HistoryHandler extends BaseHttpHandler {
 
     public HistoryHandler(TaskManager taskManager) {
-        this.taskManager = taskManager;
+        super(taskManager); // Явный вызов конструктора родителя
     }
 
     @Override

@@ -1,7 +1,6 @@
 package service;
 
 import com.sun.net.httpserver.HttpExchange;
-import com.sun.net.httpserver.HttpHandler;
 import objects.Epic;
 import objects.Subtask;
 
@@ -9,11 +8,10 @@ import java.io.IOException;
 import java.util.List;
 import java.util.Optional;
 
-public class EpicsHandler extends BaseHttpHandler implements HttpHandler {
-    private final TaskManager taskManager;
+public class EpicsHandler extends BaseHttpHandler {
 
     public EpicsHandler(TaskManager taskManager) {
-        this.taskManager = taskManager;
+        super(taskManager); // Явный вызов конструктора родителя
     }
 
     @Override
@@ -22,38 +20,63 @@ public class EpicsHandler extends BaseHttpHandler implements HttpHandler {
             String method = exchange.getRequestMethod();
             String path = exchange.getRequestURI().getPath();
 
-            switch (method) {
-                case "GET":
-                    handleGet(exchange);
-                    break;
-                case "POST":
-                    handlePost(exchange);
-                    break;
-                case "DELETE":
-                    handleDelete(exchange);
-                    break;
-                default:
-                    sendText(exchange, "Метод не поддерживается", 405);
+            if ("GET".equals(method)) {
+                if (path.matches("/epics/\\d+/subtasks")) {
+                    handleGetEpicSubtasks(exchange);
+                } else if (path.matches("/epics/\\d+")) {
+                    handleGetEpicById(exchange);
+                } else if ("/epics".equals(path)) {
+                    handleGetAllEpics(exchange);
+                } else {
+                    sendNotFound(exchange);
+                }
+            } else if ("POST".equals(method) && "/epics".equals(path)) {
+                handlePost(exchange);
+            } else if ("DELETE".equals(method)) {
+                handleDelete(exchange);
+            } else {
+                sendText(exchange, "Метод не поддерживается", 405);
             }
         } catch (Exception e) {
             sendInternalError(exchange);
         }
     }
 
-    private void handleGet(HttpExchange exchange) throws IOException {
+    private void handleGetAllEpics(HttpExchange exchange) throws IOException {
+        List<Epic> epics = taskManager.getAllEpics();
+        sendText(exchange, gson.toJson(epics));
+    }
+
+    private void handleGetEpicById(HttpExchange exchange) throws IOException {
         Optional<Integer> idOpt = getPathId(exchange);
-        if (idOpt.isPresent()) {
-            Epic epic = taskManager.getEpic(idOpt.get());
-            if (epic != null) {
-                // Для GET /epics/{id} возвращаем эпик и его подзадачи
-                EpicResponse response = new EpicResponse(epic, taskManager.getEpicSubtasks(epic.getId()));
-                sendText(exchange, gson.toJson(response));
-            } else {
-                sendNotFound(exchange);
-            }
-        } else {
-            sendText(exchange, gson.toJson(taskManager.getAllEpics()));
+        if (idOpt.isEmpty()) {
+            sendBadRequest(exchange, "Некорректный ID");
+            return;
         }
+
+        Epic epic = taskManager.getEpic(idOpt.get());
+        if (epic != null) {
+            sendText(exchange, gson.toJson(epic));
+        } else {
+            sendNotFound(exchange);
+        }
+    }
+
+    private void handleGetEpicSubtasks(HttpExchange exchange) throws IOException {
+        Optional<Integer> idOpt = getPathId(exchange);
+        if (idOpt.isEmpty()) {
+            sendBadRequest(exchange, "Некорректный ID");
+            return;
+        }
+
+        Epic epic = taskManager.getEpic(idOpt.get());
+        if (epic == null) {
+            sendNotFound(exchange);
+            return;
+        }
+
+        List<Subtask> subtasks = taskManager.getEpicSubtasks(idOpt.get());
+        sendText(exchange, gson.toJson(subtasks));
     }
 
     private void handlePost(HttpExchange exchange) throws IOException {
@@ -64,18 +87,32 @@ public class EpicsHandler extends BaseHttpHandler implements HttpHandler {
         }
 
         Epic epic = epicOpt.get();
-        if (epic.getId() == 0) {
-            int id = taskManager.createEpic(epic);
-            sendText(exchange, "{\"id\": " + id + "}", 201);
-        } else {
-            taskManager.updateEpic(epic);
-            sendText(exchange, "Эпик обновлен", 201);
+        try {
+            if (epic.getId() == 0) {
+                int id = taskManager.createEpic(epic);
+                sendText(exchange, "{\"id\": " + id + "}", 201);
+            } else {
+                taskManager.updateEpic(epic);
+                sendText(exchange, "Эпик обновлен", 201);
+            }
+        } catch (IllegalArgumentException e) {
+            sendHasInteractions(exchange);
         }
     }
 
     private void handleDelete(HttpExchange exchange) throws IOException {
-        Optional<Integer> idOpt = getPathId(exchange);
-        if (idOpt.isPresent()) {
+        String path = exchange.getRequestURI().getPath();
+
+        if ("/epics".equals(path)) {
+            taskManager.deleteAllEpics();
+            sendText(exchange, "Все эпики удалены");
+        } else if (path.matches("/epics/\\d+")) {
+            Optional<Integer> idOpt = getPathId(exchange);
+            if (idOpt.isEmpty()) {
+                sendBadRequest(exchange, "Некорректный ID");
+                return;
+            }
+
             Epic epic = taskManager.getEpic(idOpt.get());
             if (epic != null) {
                 taskManager.deleteEpic(idOpt.get());
@@ -84,19 +121,7 @@ public class EpicsHandler extends BaseHttpHandler implements HttpHandler {
                 sendNotFound(exchange);
             }
         } else {
-            taskManager.deleteAllEpics();
-            sendText(exchange, "Все эпики удалены");
-        }
-    }
-
-    // Вспомогательный класс для ответа с эпиком и его подзадачами
-    private static class EpicResponse {
-        public Epic epic;
-        public List<Subtask> subtasks;
-
-        public EpicResponse(Epic epic, List<Subtask> subtasks) {
-            this.epic = epic;
-            this.subtasks = subtasks;
+            sendNotFound(exchange);
         }
     }
 }
