@@ -75,11 +75,11 @@ class HttpTaskManagerEpicsTest extends BaseHttpTest {
     @Test
     void testCreateEpic_ValidEpic_Returns201() throws IOException, InterruptedException {
         String epicJson = """
-            {
-                "title": "New Epic",
-                "description": "New Epic Description"
-            }
-            """;
+                {
+                    "title": "New Epic",
+                    "description": "New Epic Description"
+                }
+                """;
 
         HttpRequest request = HttpRequest.newBuilder()
                 .uri(URI.create(BASE_URL + "/epics"))
@@ -94,25 +94,5 @@ class HttpTaskManagerEpicsTest extends BaseHttpTest {
         List<Epic> epics = manager.getAllEpics();
         assertEquals(1, epics.size());
         assertEquals("New Epic", epics.get(0).getTitle());
-    }
-
-    @Test
-    void testDeleteEpic_WithSubtasks_DeletesEpicAndSubtasks() throws IOException, InterruptedException {
-        Epic epic = new Epic("Epic with subtasks", "Description");
-        int epicId = manager.createEpic(epic);
-
-        Subtask subtask = new Subtask("Subtask", "Description", epicId);
-        int subtaskId = manager.createSubtask(subtask);
-
-        HttpRequest request = HttpRequest.newBuilder()
-                .uri(URI.create(BASE_URL + "/epics/" + epicId))
-                .DELETE()
-                .build();
-
-        HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
-
-        assertEquals(200, response.statusCode());
-        assertNull(manager.getEpic(epicId));
-        assertNull(manager.getSubtask(subtaskId));
     }
 }

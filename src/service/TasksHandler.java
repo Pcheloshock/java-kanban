@@ -21,8 +21,6 @@ public class TasksHandler extends BaseHttpHandler {
                 handleGet(exchange);
             } else if ("POST".equals(method)) {
                 handlePost(exchange);
-            } else if ("DELETE".equals(method)) {
-                handleDelete(exchange);
             } else {
                 sendText(exchange, "Метод не поддерживается", 405);
             }
@@ -63,17 +61,6 @@ public class TasksHandler extends BaseHttpHandler {
             }
         } catch (IllegalArgumentException e) {
             sendHasInteractions(exchange);
-        }
-    }
-
-    private void handleDelete(HttpExchange exchange) throws IOException {
-        Optional<Integer> idOpt = getPathId(exchange);
-        if (idOpt.isPresent()) {
-            taskManager.deleteTask(idOpt.get());
-            sendText(exchange, "Задача удалена");
-        } else {
-            taskManager.deleteAllTasks();
-            sendText(exchange, "Все задачи удалены");
         }
     }
 }

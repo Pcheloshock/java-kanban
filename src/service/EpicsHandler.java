@@ -11,7 +11,7 @@ import java.util.Optional;
 public class EpicsHandler extends BaseHttpHandler {
 
     public EpicsHandler(TaskManager taskManager) {
-        super(taskManager); // Явный вызов конструктора родителя
+        super(taskManager);
     }
 
     @Override
@@ -20,25 +20,33 @@ public class EpicsHandler extends BaseHttpHandler {
             String method = exchange.getRequestMethod();
             String path = exchange.getRequestURI().getPath();
 
-            if ("GET".equals(method)) {
-                if (path.matches("/epics/\\d+/subtasks")) {
-                    handleGetEpicSubtasks(exchange);
-                } else if (path.matches("/epics/\\d+")) {
-                    handleGetEpicById(exchange);
-                } else if ("/epics".equals(path)) {
-                    handleGetAllEpics(exchange);
-                } else {
-                    sendNotFound(exchange);
-                }
-            } else if ("POST".equals(method) && "/epics".equals(path)) {
-                handlePost(exchange);
-            } else if ("DELETE".equals(method)) {
-                handleDelete(exchange);
-            } else {
-                sendText(exchange, "Метод не поддерживается", 405);
+            switch (method) {
+                case "GET":
+                    handleGetRequests(exchange, path);
+                    break;
+                case "POST":
+                    handlePost(exchange);
+                    break;
+                default:
+                    sendText(exchange, "Метод не поддерживается", 405);
             }
         } catch (Exception e) {
             sendInternalError(exchange);
+        }
+    }
+
+    private void handleGetRequests(HttpExchange exchange, String path) throws IOException {
+        if (path.equals("/epics")) {
+            // GET /epics - получение всех эпиков (1 вызов)
+            handleGetAllEpics(exchange);
+        } else if (path.matches("/epics/\\d+/subtasks")) {
+            // GET /epics/{id}/subtasks - получение подзадач эпика (1 вызов)
+            handleGetEpicSubtasks(exchange);
+        } else if (path.matches("/epics/\\d+")) {
+            // GET /epics/{id} - получение эпика по ID (1 вызов - добавляет в историю)
+            handleGetEpicById(exchange);
+        } else {
+            sendNotFound(exchange);
         }
     }
 
@@ -54,6 +62,7 @@ public class EpicsHandler extends BaseHttpHandler {
             return;
         }
 
+        // Один вызов - получаем эпик и автоматически добавляем в историю
         Epic epic = taskManager.getEpic(idOpt.get());
         if (epic != null) {
             sendText(exchange, gson.toJson(epic));
@@ -69,12 +78,14 @@ public class EpicsHandler extends BaseHttpHandler {
             return;
         }
 
+        // Проверяем существование эпика
         Epic epic = taskManager.getEpic(idOpt.get());
         if (epic == null) {
             sendNotFound(exchange);
             return;
         }
 
+        // Один вызов - получаем подзадачи эпика
         List<Subtask> subtasks = taskManager.getEpicSubtasks(idOpt.get());
         sendText(exchange, gson.toJson(subtasks));
     }
@@ -89,9 +100,11 @@ public class EpicsHandler extends BaseHttpHandler {
         Epic epic = epicOpt.get();
         try {
             if (epic.getId() == 0) {
+                // Один вызов - создаем эпик
                 int id = taskManager.createEpic(epic);
                 sendText(exchange, "{\"id\": " + id + "}", 201);
             } else {
+                // Один вызов - обновляем эпик
                 taskManager.updateEpic(epic);
                 sendText(exchange, "Эпик обновлен", 201);
             }
@@ -99,29 +112,8 @@ public class EpicsHandler extends BaseHttpHandler {
             sendHasInteractions(exchange);
         }
     }
-
-    private void handleDelete(HttpExchange exchange) throws IOException {
-        String path = exchange.getRequestURI().getPath();
-
-        if ("/epics".equals(path)) {
-            taskManager.deleteAllEpics();
-            sendText(exchange, "Все эпики удалены");
-        } else if (path.matches("/epics/\\d+")) {
-            Optional<Integer> idOpt = getPathId(exchange);
-            if (idOpt.isEmpty()) {
-                sendBadRequest(exchange, "Некорректный ID");
-                return;
-            }
-
-            Epic epic = taskManager.getEpic(idOpt.get());
-            if (epic != null) {
-                taskManager.deleteEpic(idOpt.get());
-                sendText(exchange, "Эпик удален");
-            } else {
-                sendNotFound(exchange);
-            }
-        } else {
-            sendNotFound(exchange);
-        }
-    }
 }
+
+
+
+
