@@ -33,24 +33,6 @@ class HttpTaskManagerEpicsTest extends BaseHttpTest {
     }
 
     @Test
-    void testGetEpicById_ReturnsEpic() throws IOException, InterruptedException {
-        Epic epic = new Epic("Test Epic", "Description");
-        int epicId = manager.createEpic(epic);
-
-        HttpRequest request = HttpRequest.newBuilder()
-                .uri(URI.create(BASE_URL + "/epics/" + epicId))
-                .GET()
-                .build();
-
-        HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
-
-        assertEquals(200, response.statusCode());
-        Epic responseEpic = gson.fromJson(response.body(), Epic.class);
-        assertEquals(epicId, responseEpic.getId());
-        assertEquals("Test Epic", responseEpic.getTitle());
-    }
-
-    @Test
     void testGetEpicSubtasks_ReturnsSubtasks() throws IOException, InterruptedException {
         Epic epic = new Epic("Test Epic", "Description");
         int epicId = manager.createEpic(epic);

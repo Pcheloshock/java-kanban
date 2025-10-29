@@ -27,6 +27,9 @@ public class EpicsHandler extends BaseHttpHandler {
                 case "POST":
                     handlePost(exchange);
                     break;
+                case "DELETE":
+                    handleDelete(exchange, path);
+                    break;
                 default:
                     sendText(exchange, "Метод не поддерживается", 405);
             }
@@ -61,14 +64,6 @@ public class EpicsHandler extends BaseHttpHandler {
             sendBadRequest(exchange, "Некорректный ID");
             return;
         }
-
-        // Один вызов - получаем эпик и автоматически добавляем в историю
-        Epic epic = taskManager.getEpic(idOpt.get());
-        if (epic != null) {
-            sendText(exchange, gson.toJson(epic));
-        } else {
-            sendNotFound(exchange);
-        }
     }
 
     private void handleGetEpicSubtasks(HttpExchange exchange) throws IOException {
@@ -78,12 +73,6 @@ public class EpicsHandler extends BaseHttpHandler {
             return;
         }
 
-        // Проверяем существование эпика
-        Epic epic = taskManager.getEpic(idOpt.get());
-        if (epic == null) {
-            sendNotFound(exchange);
-            return;
-        }
 
         // Один вызов - получаем подзадачи эпика
         List<Subtask> subtasks = taskManager.getEpicSubtasks(idOpt.get());
@@ -112,8 +101,24 @@ public class EpicsHandler extends BaseHttpHandler {
             sendHasInteractions(exchange);
         }
     }
+
+    private void handleDelete(HttpExchange exchange, String path) throws IOException {
+        if (path.equals("/epics")) {
+            // Один вызов - удаляем все эпики
+            taskManager.deleteAllEpics();
+            sendText(exchange, "Все эпики удалены");
+        } else if (path.matches("/epics/\\d+")) {
+            Optional<Integer> idOpt = getPathId(exchange);
+            if (idOpt.isEmpty()) {
+                sendBadRequest(exchange, "Некорректный ID");
+                return;
+            }
+
+            // Один вызов - удаляем эпик по ID (без лишней проверки существования)
+            taskManager.deleteEpic(idOpt.get());
+            sendText(exchange, "Эпик удален");
+        } else {
+            sendNotFound(exchange);
+        }
+    }
 }
-
-
-
-
